@@ -38,6 +38,7 @@ const socket = io.on('connection', (socket) => {
 	socket.on('inicio', async (data) => {
 		console.log(`Dispositivo ${data} conectado`);
 
+		const key = data;
 		// Guardo en la constatnte "dispositivoConectado", lo que encuentra en mi base de datos
 		// en la tabla dispositivos.
 		const dispositivoConectado = await dispositivo.findOne({ where: { key: data } });
@@ -46,6 +47,10 @@ const socket = io.on('connection', (socket) => {
 			console.log('Dispositivo encontrado');
 			//socket.join('dispositivo-1'); -> este dato debe de ser único para la creación del "room".
 			socket.join(`dispositivo-${dispositivoConectado.id}`);
+
+			socket.on('led', async (led) => {
+				mqttClient.publish(`/dispositivos/${key}/led`, `{"led": ${led}}`);
+			});
 		} else {
 			socket.emit('dispositivo', false);
 		}
@@ -70,7 +75,8 @@ mqttClient.on('message', async (topic, message) => {
 		const datos = JSON.parse(message.toString());
 
 		const temperatura = datos.temperatura;
-		
+		const luminosidad = datos.luminosidad;
+
 		await dispositivoDato.create({
 			device_id: dispositivoConectado.id,
 			topic: topic,
@@ -78,5 +84,6 @@ mqttClient.on('message', async (topic, message) => {
 		});
 		
 		socket.in(`dispositivo-${dispositivoConectado.id}`).emit('temperatura', {date: Date(), value: temperatura});
+		socket.in(`dispositivo-${dispositivoConectado.id}`).emit('luminosidad', { data: luminosidad });
 	}
 });
