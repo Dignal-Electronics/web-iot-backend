@@ -24,7 +24,11 @@ const io = require('socket.io')(httpServer, {
 httpServer.listen(process.env.WEBSOCKET_PORT);
 
 const mqtt = require('mqtt');
-const mqttClient = mqtt.connect('http://emqx');
+const mqttClient = mqtt.connect(process.env.EMQX_HOST, {
+	username: ' ',
+	password: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJpYXQiOjE3MjQyMTEzMDZ9.rQ2ISBLxzkfCAl0HibIo7s0S-Y_ZEmjMI7ROiYoxJlo'
+});
+
 mqttClient.on('connect', () => {
 	console.log('Conectado a mqtt');
 });
@@ -77,13 +81,19 @@ mqttClient.on('message', async (topic, message) => {
 		const temperatura = datos.temperatura;
 		const luminosidad = datos.luminosidad;
 
+		const humedad = datos.humedad;
+		const presion = datos.presion;
+
 		await dispositivoDato.create({
 			device_id: dispositivoConectado.id,
 			topic: topic,
 			data: message.toString(),
 		});
-		
+
 		socket.in(`dispositivo-${dispositivoConectado.id}`).emit('temperatura', {date: Date(), value: temperatura});
 		socket.in(`dispositivo-${dispositivoConectado.id}`).emit('luminosidad', { data: luminosidad });
+
+		socket.in(`dispositivo-${dispositivoConectado.id}`).emit('humedad', {date: Date(), value: humedad});
+		socket.in(`dispositivo-${dispositivoConectado.id}`).emit('presion', {date: Date(), value: presion});
 	}
 });
