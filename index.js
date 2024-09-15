@@ -97,3 +97,52 @@ mqttClient.on('message', async (topic, message) => {
 		socket.in(`dispositivo-${dispositivoConectado.id}`).emit('presion', {date: Date(), value: presion});
 	}
 });
+
+
+
+/**
+ * Implementación de la clase OpenAiService
+ */
+const openAiService = require('./services/openai.js');
+const openAiLib = require('openai');
+
+(async function () {
+	const openAi = new openAiService(
+		new openAiLib({
+			organization: process.env.OPENAI_ORGANIZATION_ID,
+			project: process.env.OPENAI_PROJECT_ID
+		})
+	);
+
+	// Carga el archivo / Genera el fileId
+	await openAi.uploadFile();
+	// Crea el vector / Genera el vectorStoreId
+	await openAi.createVectorStore('webIotVector');
+	// Relaciona el archivo con el vector 
+	await openAi.addFileToVectorStore();
+	// Crea el asistente / Genera el assistantId
+	await openAi.createAssistant({
+		instructions: 'Analizarás la información con base en el archivo, devuelve el tiempo de vida util restante, la reducción de la vida util, la diferencia de elevación de temperatura, toma en cuenta la temperatura, asume que el parametro temperatura es el punto más caliente.',
+		name: 'web-iot',
+	});
+	// Crea el hilo / Genera el threadId
+	await openAi.createThread('temperatura: 50');
+	// Crea la ejecución / Genera el runId
+	await openAi.createRun();
+
+	let isRunCompleted = false;
+	while (!isRunCompleted) {
+		const response = await openAi.retrieveRun();
+
+		if (response.status === "completed" || response.status === "failed") {
+			isRunCompleted = true;
+		}
+
+		await new Promise((resolve) => setTimeout(resolve, 1000));
+	}
+
+	// Obtiene el listado de mensajes / Genera el lastMessage
+	await openAi.retrieveMessages();
+	let openAiMessage = await openAi.retrieveMessage();
+	console.log(`openAi: ${openAiMessage['content'][0]['text']['value']}`);
+})()

@@ -1,6 +1,6 @@
 const openAi = require("openai");
 const fs = require('fs');
-const { formatNamedParameters } = require("sequelize/lib/utils");
+const path = require('path');
 
 class OpenAiService {
     #openAI;
@@ -17,7 +17,7 @@ class OpenAiService {
 
     async uploadFile() {
         const file = await this.#openAI.files.create({
-            file: fs.createReadStream(''),
+            file: fs.createReadStream(path.join(__dirname, '../', 'assets', 'openai-documento.pdf')),
             purpose: "assistants",
         });
 
@@ -26,7 +26,7 @@ class OpenAiService {
     }
 
     async createVectorStore(vectorName){
-        const vectorStore = await this.#openAI.beta.vectorStore.create({
+        const vectorStore = await this.#openAI.beta.vectorStores.create({
             name: vectorName
         });
 
@@ -35,7 +35,7 @@ class OpenAiService {
     }
 
     async addFileToVectorStore() {
-        await this.#openAI.beta.vectorStore.files.create(this.#vectorStoreId, {
+        await this.#openAI.beta.vectorStores.files.create(this.#vectorStoreId, {
             file_id: this.#fileId,
         });
     }
@@ -110,4 +110,13 @@ class OpenAiService {
 
         this.#lastMessage = messages.last_id;
     }
+
+    async retrieveMessage() {
+        return this.#openAI.beta.threads.messages.retrieve(
+            this.#threadId,
+            this.#lastMessage
+        );
+    }
 }
+
+module.exports = OpenAiService;
