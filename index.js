@@ -55,6 +55,22 @@ const socket = io.on('connection', (socket) => {
 			socket.on('led', async (led) => {
 				mqttClient.publish(`/dispositivos/${key}/led`, `{"led": ${led}}`);
 			});
+
+			// Inicializar la ejecución del llamado al api de OpenAI
+			socket.on('openai', async () => {
+				console.log('OpenAI api inicializada.');
+				
+				// setInterval(() => {
+				// 	console.log('Realizando peticiones al api OpenAI.');
+					
+				// 	socket.emit('openaiResponse', {
+				// 		date: new Date(),
+				// 		text: 'The OpenAI API uses API keys for authentication. You can create API keys at a user or service account level. Service accounts are tied to a "bot" individual and should be used to provision access for production systems. Each API key can be scoped to one of the following'
+				// 	});
+				// }, 6000);
+			});
+
+			
 		} else {
 			socket.emit('dispositivo', false);
 		}
@@ -99,14 +115,14 @@ mqttClient.on('message', async (topic, message) => {
 });
 
 
-
 /**
  * Implementación de la clase OpenAiService
  */
+/*
 const openAiService = require('./services/openai.js');
 const openAiLib = require('openai');
 
-(async function () {
+async function generateText() {
 	const openAi = new openAiService(
 		new openAiLib({
 			organization: process.env.OPENAI_ORGANIZATION_ID,
@@ -115,18 +131,18 @@ const openAiLib = require('openai');
 	);
 
 	// Carga el archivo / Genera el fileId
-	await openAi.uploadFile();
+	await openAi.uploadFile('file-gqbPkxOpGl9j47EW7q2Ic4LX');
 	// Crea el vector / Genera el vectorStoreId
-	await openAi.createVectorStore('webIotVector');
+	await openAi.createVectorStore('webIotVector', 'vs_gegXukvIGRQMPnqaimVWc7f6');
 	// Relaciona el archivo con el vector 
 	await openAi.addFileToVectorStore();
 	// Crea el asistente / Genera el assistantId
 	await openAi.createAssistant({
 		instructions: 'Analizarás la información con base en el archivo, devuelve el tiempo de vida util restante, la reducción de la vida util, la diferencia de elevación de temperatura, toma en cuenta la temperatura, asume que el parametro temperatura es el punto más caliente.',
 		name: 'web-iot',
-	});
+	}, 'asst_TVgqyDPUDDQQ5FLypIEFD2Qf');
 	// Crea el hilo / Genera el threadId
-	await openAi.createThread('temperatura: 50');
+	await openAi.createThread('temperatura: 50', 'thread_jc0iE0d1Aps2Sh488j1nIlHY');
 	// Crea la ejecución / Genera el runId
 	await openAi.createRun();
 
@@ -145,4 +161,6 @@ const openAiLib = require('openai');
 	await openAi.retrieveMessages();
 	let openAiMessage = await openAi.retrieveMessage();
 	console.log(`openAi: ${openAiMessage['content'][0]['text']['value']}`);
-})()
+}*/
+
+// generateText();

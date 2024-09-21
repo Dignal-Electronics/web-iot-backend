@@ -15,7 +15,14 @@ class OpenAiService {
         this.#openAI = openAi;
     }
 
-    async uploadFile() {
+    async uploadFile(fileId = null) {
+
+        if (fileId !== null) {
+            this.#fileId = fileId;
+
+            return;
+        }
+
         const file = await this.#openAI.files.create({
             file: fs.createReadStream(path.join(__dirname, '../', 'assets', 'openai-documento.pdf')),
             purpose: "assistants",
@@ -25,7 +32,14 @@ class OpenAiService {
         this.#fileId = file.id
     }
 
-    async createVectorStore(vectorName){
+    async createVectorStore(vectorName, vectorId = null){
+
+        if (vectorId !== null) {
+            this.#vectorStoreId = vectorId;
+
+            return;
+        }
+
         const vectorStore = await this.#openAI.beta.vectorStores.create({
             name: vectorName
         });
@@ -40,7 +54,14 @@ class OpenAiService {
         });
     }
 
-    async createAssistant(parameters) {
+    async createAssistant(parameters, assistantId = null) {
+
+        if (assistantId !== null) {
+            this.#assistantId = assistantId;
+
+            return;
+        }
+
         const assistant = await this.#openAI.beta.assistants.create({
             instructions: parameters.instructions,
             name: parameters.name,
@@ -65,7 +86,14 @@ class OpenAiService {
         this.#assistantId = assistant.id;
     }
 
-    async createThread(userRequest) {
+    async createThread(userRequest, threadId = null) {
+
+        if (threadId !== null) {
+            this.#threadId = threadId;
+
+            return;
+        }
+
         const thread = await this.#openAI.beta.threads.create({
             messages: [
                 {
