@@ -54,26 +54,24 @@ const socket = io.on('connection', (socket) => {
 
 			socket.on('led', async (led) => {
 				mqttClient.publish(`/dispositivos/${key}/led`, `{"led": ${led}}`);
-			});
-
-			// Inicializar la ejecución del llamado al api de OpenAI
-			socket.on('openai', async () => {
-				console.log('OpenAI api inicializada.');
-				
-				// setInterval(() => {
-				// 	console.log('Realizando peticiones al api OpenAI.');
-					
-				// 	socket.emit('openaiResponse', {
-				// 		date: new Date(),
-				// 		text: 'The OpenAI API uses API keys for authentication. You can create API keys at a user or service account level. Service accounts are tied to a "bot" individual and should be used to provision access for production systems. Each API key can be scoped to one of the following'
-				// 	});
-				// }, 6000);
-			});
-
-			
+			});			
 		} else {
 			socket.emit('dispositivo', false);
 		}
+	});
+
+	// Inicializar la ejecución del llamado al api de OpenAI
+	socket.on('openai', async () => {
+		console.log('OpenAI api inicializada.');
+		
+		// setInterval(() => {
+		// 	console.log('Realizando peticiones al api OpenAI.');
+			
+		// 	socket.emit('openaiResponse', {
+		// 		date: new Date(),
+		// 		text: 'The OpenAI API uses API keys for authentication. You can create API keys at a user or service account level. Service accounts are tied to a "bot" individual and should be used to provision access for production systems. Each API key can be scoped to one of the following'
+		// 	});
+		// }, 16000);
 	});
 });
 
@@ -118,11 +116,10 @@ mqttClient.on('message', async (topic, message) => {
 /**
  * Implementación de la clase OpenAiService
  */
-/*
 const openAiService = require('./services/openai.js');
 const openAiLib = require('openai');
 
-async function generateText() {
+async function generateText(deviceData) {
 	const openAi = new openAiService(
 		new openAiLib({
 			organization: process.env.OPENAI_ORGANIZATION_ID,
@@ -131,18 +128,18 @@ async function generateText() {
 	);
 
 	// Carga el archivo / Genera el fileId
-	await openAi.uploadFile('file-gqbPkxOpGl9j47EW7q2Ic4LX');
+	await openAi.uploadFile('file-tQR546nRzfm92T0t6tYHd9nv');
 	// Crea el vector / Genera el vectorStoreId
-	await openAi.createVectorStore('webIotVector', 'vs_gegXukvIGRQMPnqaimVWc7f6');
+	await openAi.createVectorStore('webIotVector', 'vs_KSccgG9oFKYwkE0fTAADXkbi');
 	// Relaciona el archivo con el vector 
 	await openAi.addFileToVectorStore();
 	// Crea el asistente / Genera el assistantId
 	await openAi.createAssistant({
 		instructions: 'Analizarás la información con base en el archivo, devuelve el tiempo de vida util restante, la reducción de la vida util, la diferencia de elevación de temperatura, toma en cuenta la temperatura, asume que el parametro temperatura es el punto más caliente.',
 		name: 'web-iot',
-	}, 'asst_TVgqyDPUDDQQ5FLypIEFD2Qf');
+	}, 'asst_fJfwNaoFE7FKuZQfi0XdnG5y');
 	// Crea el hilo / Genera el threadId
-	await openAi.createThread('temperatura: 50', 'thread_jc0iE0d1Aps2Sh488j1nIlHY');
+	await openAi.createThread(deviceData, 'thread_OEjysdkcdF5QFBzP7nD3gPJh');
 	// Crea la ejecución / Genera el runId
 	await openAi.createRun();
 
@@ -161,6 +158,38 @@ async function generateText() {
 	await openAi.retrieveMessages();
 	let openAiMessage = await openAi.retrieveMessage();
 	console.log(`openAi: ${openAiMessage['content'][0]['text']['value']}`);
-}*/
+}
 
-// generateText();
+
+async function getCurrentTemperature(params) {
+	return 'registros de la bd'
+}
+
+
+const { Op } = require('sequelize');
+
+async function getDivicesData(diviceId) {
+	const data = await dispositivoDato.findAll({
+		attributes: ['id', 'data', 'created_at'],
+		where: {
+			device_id: diviceId,
+			created_at: {
+				// mayor o igual al inicio del día: >= 22-09-24 00:00:00
+				[Op.gte]: new Date().setHours(0, 0, 0, 0),
+				// menor o igual al final del día: <= 22-09-24 23:59:59
+				[Op.lte]: new Date(new Date().setHours(24, 0, 0, 0)),
+			}
+		}
+	});
+
+	const rows = data.map((dispositivoDato) => {
+		return dispositivoDato.get({ plain: true });
+	});
+	const rowsFormat = JSON.stringify(rows);
+
+	console.log('tabla device_data', rowsFormat.replaceAll(/\\n/g, '').replaceAll('"', ''));
+
+	generateText(rowsFormat.replaceAll(/\\n/g, '').replaceAll('"', ''));
+}
+ 
+// getDivicesData(2);
