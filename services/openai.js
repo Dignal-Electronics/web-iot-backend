@@ -136,7 +136,7 @@ class OpenAiService {
     async retrieveMessages() {
         const messages = await this.#openAI.beta.threads.messages.list(this.#threadId);
 
-        this.#lastMessage = messages.last_id;
+        this.#lastMessage = messages.body.first_id;
     }
 
     async retrieveMessage() {

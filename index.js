@@ -38,6 +38,7 @@ const db = require('./models');
 const dispositivo = db.Device;
 const dispositivoDato = db.devices_data;
 
+let intervalId = null;
 const socket = io.on('connection', (socket) => {
 	socket.on('inicio', async (data) => {
 		console.log(`Dispositivo ${data} conectado`);
@@ -61,19 +62,24 @@ const socket = io.on('connection', (socket) => {
 	});
 
 	// Inicializar la ejecución del llamado al api de OpenAI
-	socket.on('openai', async () => {
+	socket.on('openai', async (deviceKey) => {
 		console.log('OpenAI api inicializada.');
+
+		const dispositivoConectado = await dispositivo.findOne({ where: { key: deviceKey } });
 		
-		// setInterval(() => {
-		// 	console.log('Realizando peticiones al api OpenAI.');
-			
-		// 	socket.emit('openaiResponse', {
-		// 		date: new Date(),
-		// 		text: 'The OpenAI API uses API keys for authentication. You can create API keys at a user or service account level. Service accounts are tied to a "bot" individual and should be used to provision access for production systems. Each API key can be scoped to one of the following'
-		// 	});
-		// }, 16000);
+		intervalId = setInterval(() => {
+			console.log('Realizando peticiones al api OpenAI.');
+			getDivicesData(dispositivoConectado.id);
+		}, 16000);
+	});
+	
+	socket.on('disconnect', () => {
+		console.log('Socket desconectado.');
+	
+		clearInterval(intervalId);
 	});
 });
+
 
 // topic = /dispositivos/boxLBpyzd3
 mqttClient.on('message', async (topic, message) => {
@@ -128,24 +134,26 @@ async function generateText(deviceData) {
 	);
 
 	// Carga el archivo / Genera el fileId
-	await openAi.uploadFile('file-tQR546nRzfm92T0t6tYHd9nv');
+	await openAi.uploadFile();//'file-aWhvKteJwMLNJ6mKgFO74YFg');
 	// Crea el vector / Genera el vectorStoreId
-	await openAi.createVectorStore('webIotVector', 'vs_KSccgG9oFKYwkE0fTAADXkbi');
+	await openAi.createVectorStore('webIotVector');//, 'vs_lKaXrzRkVKRfkZR7pldgNNmD');
 	// Relaciona el archivo con el vector 
 	await openAi.addFileToVectorStore();
 	// Crea el asistente / Genera el assistantId
 	await openAi.createAssistant({
-		instructions: 'Analizarás la información con base en el archivo, devuelve el tiempo de vida util restante, la reducción de la vida util, la diferencia de elevación de temperatura, toma en cuenta la temperatura, asume que el parametro temperatura es el punto más caliente.',
+		instructions: 'Analizarás la información con base en el archivo pdf, devuelve el tiempo de vida util restante, la reducción de la vida util, la diferencia de elevación de temperatura, toma en cuenta la temperatura más alta proporcionada como el punto más caliente, asume que el aislamiento es de tipo A',
 		name: 'web-iot',
-	}, 'asst_fJfwNaoFE7FKuZQfi0XdnG5y');
+	});//, 'asst_m2myQCMOoWFtW4ajH6oEEPKU');
 	// Crea el hilo / Genera el threadId
-	await openAi.createThread(deviceData, 'thread_OEjysdkcdF5QFBzP7nD3gPJh');
+	await openAi.createThread(deviceData);//, 'thread_u8oLgSqHtE52XAtVv1rPN2pj');
 	// Crea la ejecución / Genera el runId
 	await openAi.createRun();
 
 	let isRunCompleted = false;
 	while (!isRunCompleted) {
 		const response = await openAi.retrieveRun();
+
+		console.log(`Run Status: ${response.status}`);
 
 		if (response.status === "completed" || response.status === "failed") {
 			isRunCompleted = true;
@@ -158,13 +166,12 @@ async function generateText(deviceData) {
 	await openAi.retrieveMessages();
 	let openAiMessage = await openAi.retrieveMessage();
 	console.log(`openAi: ${openAiMessage['content'][0]['text']['value']}`);
+
+	socket.emit('openaiResponse', {
+		date: new Date(),
+		text: openAiMessage['content'][0]['text']['value'],
+	});
 }
-
-
-async function getCurrentTemperature(params) {
-	return 'registros de la bd'
-}
-
 
 const { Op } = require('sequelize');
 
@@ -182,14 +189,14 @@ async function getDivicesData(diviceId) {
 		}
 	});
 
-	const rows = data.map((dispositivoDato) => {
-		return dispositivoDato.get({ plain: true });
-	});
-	const rowsFormat = JSON.stringify(rows);
+	if (data) {
+		const rows = data.map((dispositivoDato) => {
+			return dispositivoDato.get({ plain: true });
+		});
+		const rowsFormat = JSON.stringify(rows);
 
-	console.log('tabla device_data', rowsFormat.replaceAll(/\\n/g, '').replaceAll('"', ''));
+		// console.log('tabla device_data', rowsFormat.replaceAll(/\\n/g, '').replaceAll('"', ''));
 
-	generateText(rowsFormat.replaceAll(/\\n/g, '').replaceAll('"', ''));
+		generateText(rowsFormat.replaceAll(/\\n/g, '').replaceAll('"', ''));
+	}
 }
- 
-// getDivicesData(2);
