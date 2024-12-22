@@ -25,6 +25,7 @@
 		"passport": "^0.4.1",
 		"passport-jwt": "^4.0.0",
 		"sequelize": "^6.6.5",
+		"socket.io": "^4.8.1",
 		"validatorjs": "^3.22.1",
 		"winston": "^3.3.3"
 	},

@@ -15,6 +15,7 @@ services:
       - mysql
     networks:
       - iot-network
+    command: npm run start
 
   mysql:
     image: mysql:8.0
