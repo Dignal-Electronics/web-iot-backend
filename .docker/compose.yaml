@@ -4,6 +4,7 @@ services:
     build: node
     ports:
      - "88:88"
+     - "3000:3000"
     volumes:
       - ./../:/usr/app
     environment:
