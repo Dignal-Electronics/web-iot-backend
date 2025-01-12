@@ -9,7 +9,7 @@ const cors = require('cors');
 const serverHttp = require('http').createServer();
 const io = require('socket.io')(serverHttp, {
 	cors: {
-		origin: "*"
+		origin: process.env.URL_ORIGIN
 	}
 });
 const db = require('./models');
@@ -54,12 +54,15 @@ const socket = io.on('connection', (ioSocket) => {
 
 			// El nombre de la "room" para poder enviar los "mensajes" o datos
 			//  hacia un dispositivo especifico
-			socket.join(`dispositivo-${connectedDevice.id}`);
+			ioSocket.join(`dispositivo-${connectedDevice.id}`);
 		} else {
 			// Se ejecuta cuando connectedDevice es igual a null.
 			console.log('No se encontró el dispositivo.');
 		}
+	});
 
+	ioSocket.on('disconnect', () => {
+		console.log('Se ha desconectado del socket.');
 	});
 });
 
@@ -70,7 +73,10 @@ serverHttp.listen(process.env.WEBSOCKET_PORT);
 /**
  * Implementación del broker
  */
-const mqttClient = mqtt.connect('http://emqx');
+const mqttClient = mqtt.connect(process.env.URL_HOST_EQMX, {
+	username: ' ',
+	password: process.env.EMQX_JWT_TOKEN
+});
 
 mqttClient.on('connect', () => {
 	console.log('Se conecto a mqtt.');
@@ -106,7 +112,11 @@ mqttClient.on('message', async (topic, message) => {
 			data: message.toString()
 		});
 
+		// Emite el dato en los canales correspondientes bajo la room identificada
 		socket.in(`dispositivo-${connectedDevice.id}`).emit('temperatura', { date: Date(), value: data.temperatura });
 		socket.in(`dispositivo-${connectedDevice.id}`).emit('luminosidad', { value: data.luminosidad });
+	} else {
+		// Se ejecuta cuando connectedDevice es igual a null.
+		console.log('No se encontró el dispositivo.');
 	}
 });
