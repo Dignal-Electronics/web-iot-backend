@@ -30,12 +30,15 @@ app.listen(process.env.API_PORT, () => {
 /**
  * Implementación del websocket
  */
+let deviceConnectedKey = null;
 const socket = io.on('connection', (ioSocket) => {
 	console.log(`Se estableció conexión con el websocket, puerto: ${process.env.WEBSOCKET_PORT}`);
 
 	// Creación de un socket
 	ioSocket.on('devices', async (data) => {
 		console.log('Se recibe la key: ', data);
+		deviceConnectedKey = data;
+		// mqttClient.publish(`/dispositivos/${deviceConnectedKey}/led`, `{"led": false}`);
 
 		// Se busca el registro del dispositivo en la base de datos mediante el campo key
 		/**
@@ -59,6 +62,10 @@ const socket = io.on('connection', (ioSocket) => {
 			// Se ejecuta cuando connectedDevice es igual a null.
 			console.log('No se encontró el dispositivo.');
 		}
+	});
+
+	ioSocket.on('led', async (data) => {
+		mqttClient.publish(`/dispositivos/${deviceConnectedKey}/led`, `{"led": ${data}}`);
 	});
 
 	ioSocket.on('disconnect', () => {
@@ -115,6 +122,7 @@ mqttClient.on('message', async (topic, message) => {
 		// Emite el dato en los canales correspondientes bajo la room identificada
 		socket.in(`dispositivo-${connectedDevice.id}`).emit('temperatura', { date: Date(), value: data.temperatura });
 		socket.in(`dispositivo-${connectedDevice.id}`).emit('luminosidad', { value: data.luminosidad });
+		socket.in(`dispositivo-${connectedDevice.id}`).emit('led', { value: data.led });
 	} else {
 		// Se ejecuta cuando connectedDevice es igual a null.
 		console.log('No se encontró el dispositivo.');
