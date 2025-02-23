@@ -162,6 +162,68 @@ async function generateText() {
 
 	// Crear el hilo y a pasar los datos obtenidos mediante una consulta a la BD
 	await openAi.createThread('set de datos (temperaturas)');
+
+	//Crear la ejecución
+	await openAi.createRun();
+
+	let isRunning = true;
+	while (isRunning) {
+		const response = await openAi.retrieveRun();
+
+		console.log(`----- Run status: ${response.status}`);
+
+		if (response.status === 'completed' || response.status === "failed") {
+			isRunning = false;
+		}
+
+		await new Promise((resolve, reject) => setTimeout(resolve, 1000));
+	}
+
+	// Obtener el listado de mensajes
+	await openAi.getListMessages();
+
+	// Obtener el mensaje con la respuesta de openai
+	let openaiResponse = await openAi.getMessage();
+
+	console.log(`openai response: ${openaiResponse['content'][0]['text']['value']}`);
+	
+	// TODO: Enviar el mensaje mediante un websocket
 }
 
-generateText();
+// generateText();
+
+// Consulta de datos para openai
+const { Op } = require("sequelize");
+
+async function getDeviceData(deviceId) {
+	/**
+	 * Obtener los registros del día de un dispositivo especifico
+	 */
+	const data = await DeviceData.findAll({
+		attributes: ['id', 'data', 'created_at'],
+		where: {
+			device_id: deviceId,
+			created_at: {
+				// mayor o igual (>=) al inicio del día 2025-02-23 00:00:00
+				[Op.gte]: new Date().setHours(0, 0, 0, 0),
+				// menor o igual (<=) al final del día 2025-02-23 23:59:59
+				[Op.lte]: new Date().setHours(23, 59, 59, 59),
+			}
+		},
+	});
+
+	if (data) {
+		const rows = data.map((item) => {
+			return item.get({ plain: true})
+		});
+
+		const rowsFormat = JSON.stringify(rows)
+
+
+		console.log(`Table device data: ${rowsFormat.replaceAll(/\\n/g, '').replaceAll(/\\r/g, '').replaceAll(/\\/g, '').replaceAll('"', '')}`);
+
+		// generateText(rowsFormat)
+	}	
+}
+
+// getDeviceData(1);

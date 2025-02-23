@@ -8,6 +8,8 @@ class OpenAiService {
     #vectorStoreId;
     #assistantId;
     #threadId;
+    #runId;
+    #firstMessageId;
     
     constructor(openai = new openai()) {
         this.#openAI = openai;
@@ -110,6 +112,40 @@ class OpenAiService {
 
         console.log(`---- threadId: ${thread.id}`);
         this.#threadId = thread.id;
+    }
+
+    async createRun() {
+        const run  = await this.#openAI.beta.threads.runs.create(
+            this.#threadId,
+            { assistant_id: this.#assistantId }
+        );
+
+        console.log(`---- runId: ${run.id}`);
+        this.#runId = run.id;
+    }
+
+    /**
+     * status: queue
+     * status: in_progress
+     * status: in_progress
+     * status: in_progress
+     * status: completed
+     */
+    async retrieveRun() {
+        return this.#openAI.beta.threads.runs.retrieve(this.#threadId, this.#runId);
+    }
+
+    async getListMessages () {
+        const messages = this.#openAI.beta.threads.messages.list(this.#threadId);
+
+        this.#firstMessageId = messages.first_id;
+    }
+
+    async getMessage() {
+        return this.#openAI.beta.threads.messages.retrieve(
+            this.#threadId,
+            this.#firstMessageId
+        );
     }
 }
 
