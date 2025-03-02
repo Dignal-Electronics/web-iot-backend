@@ -58,6 +58,13 @@ const socket = io.on('connection', (ioSocket) => {
 			// El nombre de la "room" para poder enviar los "mensajes" o datos
 			//  hacia un dispositivo especifico
 			ioSocket.join(`dispositivo-${connectedDevice.id}`);
+
+			setTimeout(() => {
+				console.log('Realizando la petición al api de openai.');
+				
+				getDeviceData(connectedDevice.id);
+			}, 6000);
+
 		} else {
 			// Se ejecuta cuando connectedDevice es igual a null.
 			console.log('No se encontró el dispositivo.');
@@ -134,7 +141,7 @@ mqttClient.on('message', async (topic, message) => {
 const openAiService = require('./services/openai.js');
 const openAiLib = require('openai');
 
-async function generateText() {
+async function generateText(deviceData, deviceId) {
 	// Inicializamos nuestra clase con una instancia de openai a la cual
 	// le pasamos nuestras credenciales como parametros
 	const openAi = new openAiService(
@@ -161,12 +168,13 @@ async function generateText() {
 	}, 'asst_1hFrAOQb6MJGPDlw6k1lbtmu');
 
 	// Crear el hilo y a pasar los datos obtenidos mediante una consulta a la BD
-	await openAi.createThread('set de datos (temperaturas)');
+	await openAi.createThread(deviceData);
 
 	//Crear la ejecución
 	await openAi.createRun();
 
 	let isRunning = true;
+	let runStatus = null;
 	while (isRunning) {
 		const response = await openAi.retrieveRun();
 
@@ -174,9 +182,22 @@ async function generateText() {
 
 		if (response.status === 'completed' || response.status === "failed") {
 			isRunning = false;
+			runStatus = response.status;
 		}
 
 		await new Promise((resolve, reject) => setTimeout(resolve, 1000));
+	}
+
+	// Evita la ejecución de metodos posteriores y el fallo en el backend
+	if (runStatus === 'failed') {
+		console.log('Esta fallando el llamado al servicio de openai.');
+
+		socket.in(`dispositivo-${deviceId}`).emit('openaiResponse', {
+			date: new Date(),
+			text: 'Esta fallando el llamado al servicio de openai...'
+		});
+
+		return;
 	}
 
 	// Obtener el listado de mensajes
@@ -187,7 +208,11 @@ async function generateText() {
 
 	console.log(`openai response: ${openaiResponse['content'][0]['text']['value']}`);
 	
-	// TODO: Enviar el mensaje mediante un websocket
+	// emite la respuesta de openai hacia la app
+	socket.in(`dispositivo-${deviceId}`).emit('openaiResponse', {
+		date: new Date(),
+		text: openaiResponse['content'][0]['text']['value']
+	});
 }
 
 // generateText();
@@ -222,8 +247,18 @@ async function getDeviceData(deviceId) {
 
 		console.log(`Table device data: ${rowsFormat.replaceAll(/\\n/g, '').replaceAll(/\\r/g, '').replaceAll(/\\/g, '').replaceAll('"', '')}`);
 
-		// generateText(rowsFormat)
+		generateText(
+			rowsFormat
+				.replaceAll(/\\n/g, '')
+				.replaceAll(/\\r/g, '')
+				.replaceAll(/\\/g, '')
+				.replaceAll('"', ''),
+			deviceId
+		);
+
+		// generateText(
+		// 	rowsFormat.replaceAll(/\\n/g, '').replaceAll(/\\r/g, '').replaceAll(/\\/g, '').replaceAll('"', ''),
+		// 	deviceId
+		// );
 	}	
 }
-
-// getDeviceData(1);
