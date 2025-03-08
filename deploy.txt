@@ -1,0 +1,83 @@
+# Deploy
+
+## En la consola de google
+1. Entrar a la consola de google.
+    - https://console.cloud.google.com/
+2. Crear un  proyecto nuevo
+    - En la parte superior izquierda a la derecha del logotipo de google
+    - En la ventana emergente seleccionar nuevo proyecto
+    - Nombrar al proyecto: Flutter iot
+    - Seleccionar el proyecto flutter iot
+3. Acceder al servicio "Compute Engine"
+    - En el panel de navegación buscar el servicio o en la barra de navegación buscarlo por el nombre
+4. Habilitar el api de compute Engine
+    - Al seleccionar el servicio me puede enviar a una pantalla que me
+      solicitara habilitar el api, si es la primera vez que la utilizo.
+    - Esperar a que termine de cargar y en automatico me debe enviar
+      a la pantalla de instancias de VM
+5. Crear la instacia de una VM
+    - Dar click en el boton "Crear VM" que se encuentra en la parte superior.
+    - Configuracion de la maquina:
+        - Seleccionar en la serie: "E2".
+        - En tipo de maquina: "e2-small".
+    - SO y almacenamiento:
+        - Cambiar el sistema operativo a Ubuntu en su versión 20.04 LTS.
+    - Redes:
+        - En la sección de firewall, activar la opción de permitir tráfico http.
+6. Convertir la ip externa a una ip estática
+    - Dar click en el nombre de la instancia.
+    - Seleccionar la opcion "Editar" de la parte superiror.
+    - Ubicar la sección: "Interfaces de red".
+    - Dar click en la flecha de la lista de interfaz de redes.
+    - Ubicar el selector de "Dirección IPv4 externa".
+    - Cambia "Efimera" por "Reservar direción ip externa estática".
+    - Asignar un nombre y guardar.
+7. Generar las claves SSH para poder conectarnos a nuestra VM por medio de la consola
+    - Abrir la terminal del WSL
+    - Ejecutar el comando:  ssh-keygen -t ECDSA
+    - De preferencia no cambiar el path de guardado de las claves
+    - Luego pedira una "frase" o contraseña para la encriptación, al agregar
+      la frase nos pedirá confirmarla.
+    - Posteriormente se crearan nuestras llaves, verificar en el explorardor
+      que estas se crearon en la carpeta .ssh. Utiliza el comando: explorer.exe .
+8. agregar la llave publica a la instacia de la maquina virtual.
+    - Abrir el archivo id_edcsa.pub con el bloc de notas.
+    - Editar nuevamente la instacia de la VM.
+    - Ubicar la sección: "Claves SSH".
+    - Agregar nuevo elemento.
+    - Copiar la clave del bloc de notas y pegarla dentro del campo
+      que aparacio al dar clik en "Agregar nuevo elemento".
+    - Dar click en guardar.
+9. Conectarse a la VM mediante la terminal del WSL.
+    - En la terminal ejecutar el siguiente comando, sustituyendo con sus propios valores:
+        - ssh <usuario>@<ip-externa> -i "<path de la clave privada>"
+10. Actualizar los paquetes del sistema
+    - Ejecutar el comando: "sudo apt update", para obtener la lista de paquetes a Actualizar.
+    - Ejecutar el comando: "sudo apt upgrade", para instalar las actualizaciones encontradas.
+11. Instalar docker engine:
+    - Seguir los pasos indicados en la documentación de docker para instalar docker engine en Ubuntu
+        - https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository
+    - De preferencia ejecutar  los comandos de forma individual.
+    - Al llegar al paso 3, habremos terminado con la instalación, entonces debemos ejecutar el comando:
+      "sudo docker run hello-world" para verificar que docker se ha instalado en nuestro equipo.
+12. Crear la carpeta llamada backend ejecutando el siguiente comando:
+    - mkdir backend
+13 En VSCode instalar la extensión SFTP (del autor Natizyskunk)
+    - Presionar la combinación de teclas Ctrl + Shift + P
+    - Escribir: sftp: config
+    - Esto nos crea el archivo sftp.json el cual contiene la configuración de la conexión ftp
+     Modificarlos siguientes valores
+    - host: IP externa,
+    - username: "nombre de usuario de la ssh",
+    - remotePath: "/home/usuario/back", // path de la carpeta donde se almacenara el proyecto en la VM
+    - privateKeyPath: "/home/usuario/.ssh/id_ecdsa", // windows - linux (sustituir usuario)
+    - privateKeyPath: "/User/usuario/.ssh/id_ecdsa", // MacOs (sustituir usuario)
+    // Agregar los siguientes archivos y carpetas a excluir
+    - ignore: [
+        ".vscode",
+        ".git",
+        ".DS_Store",
+        "node_modules"
+    ]
+    - Ir al explorador de archivos de VSCode y hasta el final dar click derecho en una zona libre de archivos
+    - Elegir la antepenúltima opción "Upload Folder" para que se carguen nuestros archivos a la VM.
