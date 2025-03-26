@@ -132,17 +132,17 @@ class OpenAiService {
      * status: completed
      */
     async retrieveRun() {
-        return this.#openAI.beta.threads.runs.retrieve(this.#threadId, this.#runId);
+        return await this.#openAI.beta.threads.runs.retrieve(this.#threadId, this.#runId);
     }
 
     async getListMessages () {
-        const messages = this.#openAI.beta.threads.messages.list(this.#threadId);
+        const messages = await this.#openAI.beta.threads.messages.list(this.#threadId);
 
-        this.#firstMessageId = messages.first_id;
+        this.#firstMessageId = messages.body.first_id;
     }
 
     async getMessage() {
-        return this.#openAI.beta.threads.messages.retrieve(
+        return await this.#openAI.beta.threads.messages.retrieve(
             this.#threadId,
             this.#firstMessageId
         );

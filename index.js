@@ -63,6 +63,10 @@ const socket = io.on('connection', (ioSocket) => {
 				console.log('Realizando la petición al api de openai.');
 				
 				getDeviceData(connectedDevice.id);
+				// socket.in(`dispositivo-${connectedDevice.id}`).emit('openaiResponse', {
+				// 	date: new Date(),
+				// 	text: `texto`
+				// });
 			}, 6000);
 
 		} else {
@@ -153,19 +157,24 @@ async function generateText(deviceData, deviceId) {
 	);
 
 	// Cargar el archivo -> FileId: file-1H9MMSXw4aoK8FrkEm9SNN
-	await openAi.uploadFile('file-1H9MMSXw4aoK8FrkEm9SNN');
+	await openAi.uploadFile();
 
 	// Crear el vector store -> VectorStoreId: 
-	await openAi.createVectorStore('flutterIotVS', 'vs_67ba03b06ec481919f22643fdd85dc53');
+	await openAi.createVectorStore('flutterIotVS');
 
 	// Adjuntar el archivo al vector store
 	await openAi.addFileToVectorStore();
 
 	// Crear el asistente -> AssistantId
 	await openAi.createAssitant({
-		instructions: 'Analizarás la información con base en el archivo pdf, devuelve el tiempo de vida util restante, la reducción de la vida util, la diferencia de elevación de temperatura, toma en cuenta la temperatura más alta proporcionada como el punto más caliente, asume que el aislamiento es de tipo A',
+		instructions: `Analizarás la información con base en el archivo pdf,
+		devuelve el tiempo de vida util restante, la reducción de la vida util,
+		la diferencia de elevación de temperatura,
+		toma en cuenta la temperatura más alta que encuentres dentro de los registros proporcionados como el punto más caliente,
+		para la elevación de temperatura toma en cuenta la temperatura más alta dentro de los registros,
+		asume que el aislamiento es de tipo A`,
 		name: 'flutterIotAssistant'
-	}, 'asst_1hFrAOQb6MJGPDlw6k1lbtmu');
+	});
 
 	// Crear el hilo y a pasar los datos obtenidos mediante una consulta a la BD
 	await openAi.createThread(deviceData);
