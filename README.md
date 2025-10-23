@@ -13,19 +13,19 @@
 - Para iniciar debes clonar este repositorio en tu equipo por medio del siguiente comando de git:
 - Si eres usuario windows debes clonar esta carpeta dentro de la carpeta raíz del WSL.
 
-```
-git clone git@github.com:Dignal-Electronics/iot-backend-2024.git
+```bash
+git clone git@github.com:Dignal-Electronics/web-iot-backend.git
 ```
 
 - El proyecto debe ser levantado usando docker, para ello primero debemos de instalar las dependencias usando el comando `npm install`:
 
-```
-docker compose -f .docker/compose.yaml run node npm install
+```bash
+docker compose -f .docker/compose.yaml run --rm node npm install
 ```
 
 - Después de instalar las dependencias debemos levantar el contendor:
 
-```
+```bash
 docker compose -f .docker/compose.yaml up -d
 ```
 
@@ -35,19 +35,20 @@ docker compose -f .docker/compose.yaml up -d
 
 - Ejecutar comando `npx sequelize-cli db:create` para crear la base de datos
 
-```
-docker compose -f .docker/compose.yaml run node npx sequelize-cli db:create
+```bash
+docker compose -f .docker/compose.yaml run --rm node npx sequelize-cli db:create
 ```
 
 - Ejecutar comando `npx sequelize-cli db:migrate` para construcción de tablas base.
 
-```
-docker compose -f .docker/compose.yaml run node npx sequelize-cli db:migrate
+```bash
+docker compose -f .docker/compose.yaml run --rm node npx sequelize-cli db:migrate
 ```
 
 - Configurar archivo .env ubicado en el directorio raíz del proyecto
 
 - Ejecutar el comando `npx sequelize-cli db:seed:all` para crear usuario demo.
-```
-docker compose -f .docker/compose.yaml run node npx sequelize-cli db:seed:all
+
+```bash
+docker compose -f .docker/compose.yaml run --rm node npx sequelize-cli db:seed:all
 ```

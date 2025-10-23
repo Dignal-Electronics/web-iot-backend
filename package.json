@@ -1,7 +1,7 @@
 {
-	"name": "iot-dignal-backend",
-	"version": "1.0.0",
-	"description": "Backend template course IoT august 2021",
+	"name": "dignal-iot-backend",
+	"version": "1.2.0",
+	"description": "Backend template course IoT 2025",
 	"main": "index.js",
 	"scripts": {
 		"start": "nodemon index.js"
@@ -13,23 +13,23 @@
 		"node",
 		"websockets"
 	],
-	"author": "Roger Burgos",
+	"author": "Juan Carlos Landero",
 	"license": "ISC",
 	"dependencies": {
-		"bcrypt": "^5.0.1",
+		"bcrypt": "^6.0.0",
 		"cors": "^2.8.5",
-		"dotenv": "^10.0.0",
-		"express": "^4.17.1",
-		"jsonwebtoken": "^8.5.1",
-		"mysql2": "^2.3.0",
-		"passport": "^0.4.1",
+		"dotenv": "^17.2.3",
+		"express": "^5.1.0",
+		"jsonwebtoken": "^9.0.2",
+		"mysql2": "^3.15.2",
+		"passport": "^0.7.0",
 		"passport-jwt": "^4.0.0",
 		"sequelize": "^6.6.5",
 		"validatorjs": "^3.22.1",
 		"winston": "^3.3.3"
 	},
 	"devDependencies": {
-		"nodemon": "^2.0.12",
+		"nodemon": "^3.1.10",
 		"sequelize-cli": "^6.2.0"
 	}
 }

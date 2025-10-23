@@ -2,8 +2,19 @@ const db = require('../models');
 const User = db.User;
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const validator = require('validatorjs');
 
 const login = async (req, res) => {
+
+	const rules = {
+		username: 'required',
+		password: 'required'
+	};
+
+	const validation = new validator(req.body, rules);
+	if (validation.fails()) {
+		return res.status(422).send(validation.errors);
+	}
 
 	const user = await User.findOne({ where: { username: req.body.username, active: true } });
 	if (!user) {
